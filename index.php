@@ -76,13 +76,13 @@
 ?> 
 <p>
 [ <a href='VehicleImagery/getVehicleImages.php' target='_self'>getVehicleImages</a> ]
+[ <a href='VehicleImagery/getVehicleImagesN.php' target='_self'>getVehicleImagesN</a> ]
 </p>
 <?php
     echo "<H2>Hilfe</H2>";
 ?> 
 <p>
 [ <a href='http://www.dat.de' target='_blank'>DAT</a> ]
-[ <a href='http://www.dat.de/fileadmin/media/download/download-KD/Schnittstellen-Kompendium/online/DAT_Schnittstellen/deutsch/SilverDAT%20Schnittstellen-Kompendium' target='_blank'>SilverDAT Schnittstellen-Kompendium</a> ]
 [ <a href='https://github.com/DATGROUP' target='_blank'>GitHub</a> ]
 </p>
 </body>

@@ -12,48 +12,27 @@
 		<h1>getGearingOptions</h1>
 			<p>
 			<?php
-				require( "../includes/configure.php" );
-				ini_set("display_errors", true);
-				header("Content-Type: text/html");
+				require( '../includes/configure.php' );
+				ini_set('display_errors', true);
+				header('Content-Type: text/html');
 				try {
-					$wsdlDatei_eval = new SoapClient($host."/DATECodeSelection/services/Authentication?wsdl",
-										array('features' => SOAP_WAIT_ONE_WAY_CALLS, 'trace' => true,
-										'exceptions' => 1, 'cache_wsdl'=>'WSDL_CACHE_NONE','encoding' => 'UTF-8',
-										'uri' => 'http://sphinx.dat.de/services/Authentication',
-										'soap_version' => SOAP_1_1 ));
+					// setzen der Credentials im HTTP-Header
+					$aHTTP['http']['header'] = "User-Agent: PHP-SOAP/5.5.11\r\n";
+					$aHTTP['http']['header'].= "productVariant: ".$productVariant."\r\n";
+					$aHTTP['http']['header'].= "customerLogin: ".$customerLogin."\r\n";
+					$aHTTP['http']['header'].= "customerNumber: ".$customerNumber."\r\n";
+					$aHTTP['http']['header'].= "customerSignature: ".$customerSignature."\r\n";
+					$aHTTP['http']['header'].= "interfacePartnerNumber: ".$interfacePartnerNumber."\r\n";
+					$aHTTP['http']['header'].= "interfacePartnerSignature: ".$interfacePartnerSignature."\r\n";
+					$context = stream_context_create($aHTTP);
 
-					$loginRequest = new SoapVar('<request>
-									<customerLogin>'.$customerLogin.'</customerLogin>
-									<customerNumber>'.$customerNumber.'</customerNumber>
-									<customerSignature>'.$customerSignature.'</customerSignature>
-									<interfacePartnerNumber>'.$interfacePartnerNumber.'</interfacePartnerNumber>
-									<interfacePartnerSignature>'.$interfacePartnerSignature.'</interfacePartnerSignature>
-									</request>', XSD_ANYXML); 
+					// WSDL-URL_Adresse 
+					$client = new SoapClient($host.'/'.$product.'/'.$service.'/VehicleSelectionService?wsdl',array('trace' => 1,'stream_context' => $context));
 
-					$tag['doLogin'] = $loginRequest;
-					$preLogin = new SoapVar($tag, SOAP_ENC_OBJECT);
-					$getSessionId = array($preLogin);
+					// Änderung des Web Service Endpoints 
+					$client->__setLocation($host.'/'.$product.'/'.$service.'/VehicleSelectionService');
 
-					$objLogin = $wsdlDatei_eval -> __soapCall('doLogin',$getSessionId);
-					$sessionID = $objLogin->sessionID;
-
-					//echo "SessionID = ";
-					//echo $sessionID;
-
-					// Store all cookies that have been sent by the first call (including their path-component)
-					$responseCookies = $wsdlDatei_eval->_cookies;
-					$keys = array_keys($responseCookies);
-					$requestCookies=array();
-					foreach($keys as $k) {
-						$requestCookies[$k] = $responseCookies[$k][0].";". $responseCookies[$k][1];
-					}
-
-					$wsdlDatei_eval2 = new SoapClient($host."/DATECodeSelection/services/VehicleSelectionService?wsdl",
-										array('features' => SOAP_WAIT_ONE_WAY_CALLS, 'trace' => true,'exceptions' => 1,
-										'cache_wsdl'=>'WSDL_CACHE_NONE','encoding' => 'UTF-8',
-										'uri' => 'http://sphinx.dat.de/services/VehicleSelectionService',
-										'soap_version' => SOAP_1_1));
-
+					// setzen der Parameter
 					$constructionTimeFrom='1';
 					$constructionTimeTo='9999';
 					$restriction='ALL';
@@ -62,51 +41,47 @@
 					$baseModel='48';
 					$subModel='3';
 
-					$request = new SoapVar('<request>
-								<locale country="'.$country.'" datCountryIndicator="'.$datCountryIndicator.'" language="'.$language.'"/>
-								<constructionTimeFrom>'.$constructionTimeFrom.'</constructionTimeFrom>
-								<constructionTimeTo>'.$constructionTimeTo.'</constructionTimeTo>
-								<restriction>'.$restriction.'</restriction>
-								<vehicleType>'.$vehicleType.'</vehicleType>
-								<manufacturer>'.$manufacturer.'</manufacturer>
-								<baseModel>'.$baseModel.'</baseModel>
-								<subModel>'.$subModel.'</subModel>
-								</request>',XSD_ANYXML);
+					$parameter = new \stdClass();
+					$parameter->request = new \stdClass();
+					$parameter->request->locale = new \stdClass();
+					$parameter->request->sessionID = '';
+					$parameter->request->locale->country =  "DE";
+					$parameter->request->locale->datCountryIndicator = "DE";
+					$parameter->request->locale->language = "de";
+					$parameter->request->constructionTimeFrom = $constructionTimeFrom;
+					$parameter->request->constructionTimeTo = $constructionTimeTo;
+					$parameter->request->restriction = $restriction;
+					$parameter->request->vehicleType = $vehicleType;
+					$parameter->request->manufacturer = $manufacturer;
+					$parameter->request->baseModel = $baseModel;
+					$parameter->request->subModel = $subModel;
 
-					$tag['getGearingOptions'] = $request;
-					$prerequest = new SoapVar($tag, SOAP_ENC_OBJECT);
-					$getCardata = array($prerequest);
+					// SOAP call
+					$response = $client->getGearingOptions($parameter);
 
-					// Set the previously stored cookie for the request
-					foreach($keys as $k) {
-						$wsdlDatei_eval2 -> __setCookie($k, $requestCookies[$k]);
+					if (is_soap_fault($response)) {
+						// Ausgabe des SOAP Fehlers
+						trigger_error('SOAP Fault: (faultcode: {$objConversions->faultcode}, faultstring: {$objConversions->faultstring})', E_USER_ERROR);
+						print_r('REQUEST-Header: ' .$client->__getLastRequestHeaders() );
+						print_r('REQUEST: ' .$client->__getLastRequest() . '\n');
+						print_r('RESPONSE-Header: ' . $client->__getLastResponseHeaders() . '\n');
 					}
 
-					$objConversions = $wsdlDatei_eval2 -> __soapCall('getGearingOptions', $getCardata);
-
-					if (is_soap_fault($objConversions)) {
-						trigger_error("SOAP Fault: (faultcode: {$objConversions->faultcode}, faultstring: {$objConversions->faultstring})", E_USER_ERROR);
-						print_r("REQUEST-Header2: " .$wsdlDatei_eval2->__getLastRequestHeaders() . "");
-						print_r("Last-REQUEST2: " .$wsdlDatei_eval2->__getLastRequest() . "");
-						print_r("Last-RESPONSE2: " . $wsdlDatei_eval2->__getLastResponseHeaders() . "");
-					}
-
-					echo "<pre>";
-						print_r("REQUEST-Header2: " .$wsdlDatei_eval2->__getLastRequestHeaders() . "");
-						print_r("Last-REQUEST2: " .$wsdlDatei_eval2->__getLastRequest() . "");
-						print_r("Last-RESPONSE2: " . $wsdlDatei_eval2->__getLastResponseHeaders() . "");
-
-						print_r($objConversions );
-					echo "</pre>";
-
-					$wsdlDatei_eval->doLogout(); 
+					echo '<pre>';
+						// Ausgabe des SOAP Calls (Request, Header und Response
+						print_r('REQUEST-Header:\n' .$client->__getLastRequestHeaders() );
+						print_r('REQUEST:\n ' .htmlentities($client->__getLastRequest()) . '\n');
+						print_r('RESPONSE-Header:\n ' . $client->__getLastResponseHeaders() . '\n');
+						print_r('RESPONSE:\n' .htmlentities($client->__getLastResponse()) . '\n\n');
+						print_r($response);
+					echo '</pre>';
 
 				} catch (SoapFault  $e) {
+						// Error Handling
 						$errorHandled = false;
-						$wsdlDatei_eval->doLogout();
-						echo "<pre>";
+						echo '<pre>';
 						print_r($e);
-						echo "</pre>";
+						echo '</pre>';
 
 						$exception = $e->getMessage();
 				}
@@ -118,7 +93,7 @@
 		<h1>Fertig</h1>
 	</footer>
 	<p>
-		<a href="../index.php" target="_self">Startseite</a>
+		<a href='../index.php' target='_self'>Startseite</a>
 	</p>
 </body>
 </html>

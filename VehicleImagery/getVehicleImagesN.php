@@ -9,7 +9,7 @@
 	</header>
 	<section>
 		<article>
-		<h1>getVehicleImages</h1>
+		<h1>getVehicleImagesN</h1>
 			<p>
 			<?php
 				require( '../includes/configure.php' );
@@ -33,19 +33,20 @@
 					$client->__setLocation($host.'/'.$product.'/'.$service.'/VehicleImagery');
 
 					// setzen der Parameter
-					$datECode = '01905088001';
+					$datECode = '019050880010001';
 					$imageType = 'PICTURE';
-					$aspect = 'SIDE_VIEW_2';
+					$view1 = 'SIDEVIEW';
+					$view2 = 'ANGULARFRONT';
 
 					$parameter = new \stdClass();
 					$parameter->request = new \stdClass();
 					$parameter->request->sessionID = '';
-					$parameter->request->aspect = $aspect;
 					$parameter->request->datECode = $datECode;
 					$parameter->request->imageType = $imageType;
+					$parameter->request->aspect = array ( $view1, $view2 );
 
 					// SOAP call
-					$response = $client->getVehicleImages($parameter);
+					$response = $client->getVehicleImagesN($parameter);
 
 					if (is_soap_fault($response)) {
 						// Ausgabe des SOAP Fehlers
